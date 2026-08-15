@@ -230,6 +230,22 @@ export function useCreateProject() {
   })
 }
 
+export function useReorderProjects() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: number[]) => withCsrf(async () => api.post('/projects/reorder', { ids })),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
+  })
+}
+
+export function useReorderFolders() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: number[]) => withCsrf(async () => api.post('/folders/reorder', { ids })),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['folders'] }),
+  })
+}
+
 export function useUpdateProject() {
   const qc = useQueryClient()
   return useMutation({

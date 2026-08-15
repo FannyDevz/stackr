@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { format, parseISO } from 'date-fns'
-import { Check, Flag, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Eye, Flag, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useUI } from '../store/ui'
 import {
   useAddComment,
@@ -34,7 +34,9 @@ export default function Inspector() {
   const deleteComment = useDeleteComment()
   const addToast = useToast((s) => s.addToast)
 
-  const [mode, setMode] = useState<'view' | 'edit'>('view')
+  // Open a task straight into edit mode; the eye button switches to read-only view.
+  // (Inspector is remounted per task via key={selectedTaskId}, so this resets each open.)
+  const [mode, setMode] = useState<'view' | 'edit'>('edit')
   const [title, setTitle] = useState('')
   const [note, setNote] = useState('')
   const [comment, setComment] = useState('')
@@ -84,10 +86,10 @@ export default function Inspector() {
           ) : (
             <button
               onClick={() => setMode('view')}
-              className="rounded p-1.5 text-brand hover:opacity-80"
-              title="Done editing"
+              className="rounded p-1.5 text-slate-400 hover:text-brand"
+              title="View"
             >
-              <Check size={18} />
+              <Eye size={16} />
             </button>
           )}
           <button

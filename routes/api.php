@@ -40,9 +40,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'destroy']);
 
     // Organisational structure
+    Route::post('folders/reorder', [FolderController::class, 'reorder']);
     Route::apiResource('folders', FolderController::class);
     Route::apiResource('tags', TagController::class);
 
+    Route::post('projects/reorder', [ProjectController::class, 'reorder']);
     Route::apiResource('projects', ProjectController::class);
     Route::post('projects/{project}/review', [ProjectController::class, 'review']);
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\FolderResource;
 use App\Models\Folder;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FolderController extends Controller
 {
@@ -50,6 +51,20 @@ class FolderController extends Controller
     {
         $this->authorizeOwner($folder, $request);
         $folder->delete();
+
+        return response()->noContent();
+    }
+
+    public function reorder(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => ['integer', Rule::exists('folders', 'id')->where('user_id', $request->user()->id)],
+        ]);
+
+        foreach ($data['ids'] as $i => $id) {
+            $request->user()->folders()->where('id', $id)->update(['position' => $i]);
+        }
 
         return response()->noContent();
     }

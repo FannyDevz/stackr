@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
   CalendarClock,
   CalendarDays,
@@ -10,6 +12,7 @@ import {
   Flag,
   Folder,
   FolderPlus,
+  GripVertical,
   Inbox,
   Keyboard,
   LayoutTemplate,
@@ -75,13 +78,28 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   function renderProject(p: Project) {
     return (
-      <DropZone key={p.id} id={`zone:${p.id}`}>
-        <NavLink to={`/project/${p.id}`} className={link} title={p.title}>
-          <span className="truncate">{p.title}</span>
-          {p.flagged && <Flag size={12} className="ml-auto text-amber-500" />}
-          {!!p.remaining_count && <span className="ml-auto text-xs text-slate-400">{p.remaining_count}</span>}
-        </NavLink>
-      </DropZone>
+      <SortableRow key={p.id} id={`sproj:${p.id}`}>
+        {(handle) => (
+          <div className="group/row flex items-center gap-0.5">
+            <button
+              {...handle}
+              className="cursor-grab touch-none text-slate-300 opacity-0 group-hover/row:opacity-100"
+              title="Drag to reorder"
+            >
+              <GripVertical size={12} />
+            </button>
+            <div className="min-w-0 flex-1">
+              <DropZone id={`zone:${p.id}`}>
+                <NavLink to={`/project/${p.id}`} className={link} title={p.title}>
+                  <span className="truncate">{p.title}</span>
+                  {p.flagged && <Flag size={12} className="ml-auto text-amber-500" />}
+                  {!!p.remaining_count && <span className="ml-auto text-xs text-slate-400">{p.remaining_count}</span>}
+                </NavLink>
+              </DropZone>
+            </div>
+          </div>
+        )}
+      </SortableRow>
     )
   }
 
@@ -190,29 +208,67 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               <span className="text-slate-400">By project</span>
             </NavLink>
           )}
-          {projects.data?.filter((p) => p.folder_id == null).map(renderProject)}
-          {folders.data?.map((folder) => {
-            const inFolder = projects.data?.filter((p) => p.folder_id === folder.id) ?? []
-            const isCollapsed = collapsed.has(folder.id)
+          {(() => {
+            const top = projects.data?.filter((p) => p.folder_id == null) ?? []
             return (
-              <div key={folder.id}>
-                <div className="flex items-center gap-0.5">
-                  <button
-                    onClick={() => toggleFolder(folder.id)}
-                    className="rounded p-1 text-slate-400 hover:text-brand"
-                    title={isCollapsed ? 'Expand' : 'Collapse'}
-                  >
-                    {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
-                  </button>
-                  <NavLink to={`/folder/${folder.id}`} className={(s) => `${link(s)} min-w-0 flex-1`} title={folder.name}>
-                    <Folder size={13} /> <span className="truncate">{folder.name}</span>
-                    {!!inFolder.length && <span className="ml-auto text-[10px] text-slate-400">{inFolder.length}</span>}
-                  </NavLink>
-                </div>
-                {!isCollapsed && <div className="ml-2 space-y-0.5">{inFolder.map(renderProject)}</div>}
-              </div>
+              <SortableContext items={top.map((p) => `sproj:${p.id}`)} strategy={verticalListSortingStrategy}>
+                {top.map(renderProject)}
+              </SortableContext>
             )
-          })}
+          })()}
+          <SortableContext
+            items={(folders.data ?? []).map((f) => `sfold:${f.id}`)}
+            strategy={verticalListSortingStrategy}
+          >
+            {folders.data?.map((folder) => {
+              const inFolder = projects.data?.filter((p) => p.folder_id === folder.id) ?? []
+              const isCollapsed = collapsed.has(folder.id)
+              return (
+                <SortableRow key={folder.id} id={`sfold:${folder.id}`}>
+                  {(handle) => (
+                    <div>
+                      <div className="group/folder flex items-center gap-0.5">
+                        <button
+                          {...handle}
+                          className="cursor-grab touch-none text-slate-300 opacity-0 group-hover/folder:opacity-100"
+                          title="Drag folder"
+                        >
+                          <GripVertical size={12} />
+                        </button>
+                        <button
+                          onClick={() => toggleFolder(folder.id)}
+                          className="rounded p-1 text-slate-400 hover:text-brand"
+                          title={isCollapsed ? 'Expand' : 'Collapse'}
+                        >
+                          {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+                        </button>
+                        <NavLink
+                          to={`/folder/${folder.id}`}
+                          className={(s) => `${link(s)} min-w-0 flex-1`}
+                          title={folder.name}
+                        >
+                          <Folder size={13} /> <span className="truncate">{folder.name}</span>
+                          {!!inFolder.length && (
+                            <span className="ml-auto text-[10px] text-slate-400">{inFolder.length}</span>
+                          )}
+                        </NavLink>
+                      </div>
+                      {!isCollapsed && (
+                        <div className="ml-2 space-y-0.5">
+                          <SortableContext
+                            items={inFolder.map((p) => `sproj:${p.id}`)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {inFolder.map(renderProject)}
+                          </SortableContext>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </SortableRow>
+              )
+            })}
+          </SortableContext>
         </Section>
 
         {!hidden.tags && (
@@ -331,6 +387,28 @@ function DropZone({ id, children }: { id: string; children: ReactNode }) {
       }`}
     >
       {children}
+    </div>
+  )
+}
+
+// A draggable sidebar row. The drag handle props are passed to the render-prop
+// child so only the grip (not the whole row/link) initiates the drag.
+function SortableRow({
+  id,
+  children,
+}: {
+  id: string
+  children: (handle: Record<string, unknown>) => ReactNode
+}) {
+  const { setNodeRef, transform, transition, listeners, attributes, isDragging } = useSortable({ id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ ...attributes, ...listeners })}
     </div>
   )
 }

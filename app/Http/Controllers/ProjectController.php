@@ -114,4 +114,18 @@ class ProjectController extends Controller
             'position' => 'integer',
         ]);
     }
+
+    public function reorder(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => ['integer', Rule::exists('projects', 'id')->where('user_id', $request->user()->id)],
+        ]);
+
+        foreach ($data['ids'] as $i => $id) {
+            $request->user()->projects()->where('id', $id)->update(['position' => $i]);
+        }
+
+        return response()->noContent();
+    }
 }

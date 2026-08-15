@@ -32,3 +32,6 @@ Thumbs.db
 /desktop/dist
 /desktop/app-dist
 /desktop/bin
+
+# DDEV-generated TLS certs/config (per-machine)
+/.ddev/traefik/

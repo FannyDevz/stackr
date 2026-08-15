@@ -522,6 +522,46 @@ class TaskApiTest extends TestCase
         $this->postJson('/api/setup/migrate')->assertForbidden();
     }
 
+    public function test_projects_can_be_reordered(): void
+    {
+        $user = User::factory()->create();
+        $a = Project::factory()->for($user)->create(['position' => 0]);
+        $b = Project::factory()->for($user)->create(['position' => 1]);
+        $c = Project::factory()->for($user)->create(['position' => 2]);
+
+        $this->actingAs($user)
+            ->postJson('/api/projects/reorder', ['ids' => [$c->id, $a->id, $b->id]])
+            ->assertNoContent();
+
+        $this->assertSame(0, $c->fresh()->position);
+        $this->assertSame(1, $a->fresh()->position);
+        $this->assertSame(2, $b->fresh()->position);
+    }
+
+    public function test_folders_can_be_reordered(): void
+    {
+        $user = User::factory()->create();
+        $a = $user->folders()->create(['name' => 'A', 'position' => 0]);
+        $b = $user->folders()->create(['name' => 'B', 'position' => 1]);
+
+        $this->actingAs($user)
+            ->postJson('/api/folders/reorder', ['ids' => [$b->id, $a->id]])
+            ->assertNoContent();
+
+        $this->assertSame(0, $b->fresh()->position);
+        $this->assertSame(1, $a->fresh()->position);
+    }
+
+    public function test_cannot_reorder_another_users_project(): void
+    {
+        $user = User::factory()->create();
+        $other = Project::factory()->for(User::factory()->create())->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/projects/reorder', ['ids' => [$other->id]])
+            ->assertStatus(422);
+    }
+
     public function test_realtime_stream_requires_authentication(): void
     {
         $this->getJson('/api/stream')->assertUnauthorized();

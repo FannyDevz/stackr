@@ -24,7 +24,7 @@ import DialogHost from './DialogHost'
 import { PageSkeleton } from './Skeleton'
 import { useUI } from '../store/ui'
 import { useDnd } from '../store/dnd'
-import { useUpdateTask } from '../hooks/queries'
+import { useFolders, useProjects, useReorderFolders, useReorderProjects, useUpdateTask } from '../hooks/queries'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useDueReminders } from '../hooks/useDueReminders'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
@@ -32,10 +32,20 @@ import { isDesktop } from '../lib/env'
 import type { Task } from '../lib/types'
 
 // Prefer pointer-based hits (so sidebar drop-zones register), fall back to
-// closest-center for smooth in-list sorting.
+// closest-center for smooth in-list sorting. Candidate droppables are scoped to
+// what's being dragged so, e.g., reordering a project never resolves onto a
+// task drop-zone (and vice-versa).
 const collision: CollisionDetection = (args) => {
-  const pointer = pointerWithin(args)
-  return pointer.length ? pointer : closestCenter(args)
+  const activeId = String(args.active.id)
+  const kind = activeId.startsWith('sproj:') ? 'sproj:' : activeId.startsWith('sfold:') ? 'sfold:' : null
+  const droppableContainers = args.droppableContainers.filter((c) => {
+    const cid = String(c.id)
+    if (kind) return cid.startsWith(kind) // sidebar sorting: only same-kind rows
+    return !cid.startsWith('sproj:') && !cid.startsWith('sfold:') // task drag: zones + tasks
+  })
+  const scoped = { ...args, droppableContainers }
+  const pointer = pointerWithin(scoped)
+  return pointer.length ? pointer : closestCenter(scoped)
 }
 
 const ZONE = 'zone:'
@@ -44,6 +54,10 @@ export default function Layout() {
   const selectedTaskId = useUI((s) => s.selectedTaskId)
   const helpOpen = useUI((s) => s.helpOpen)
   const move = useUpdateTask()
+  const projectsQuery = useProjects({ status: 'active' })
+  const foldersQuery = useFolders()
+  const reorderProjects = useReorderProjects()
+  const reorderFolders = useReorderFolders()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const [dragging, setDragging] = useState<Task | null>(null)
   const [mobileNav, setMobileNav] = useState(false)
@@ -69,6 +83,36 @@ export default function Layout() {
     setDragging(null)
     const { active, over } = event
     if (!over) return
+
+    // Sidebar reordering (projects / folders). Ids are prefixed sproj:/sfold:.
+    const aStr = String(active.id)
+    const oStr = String(over.id)
+    if (aStr.startsWith('sproj:') && oStr.startsWith('sproj:')) {
+      const aId = Number(aStr.slice(6))
+      const oId = Number(oStr.slice(6))
+      const active_ = projectsQuery.data?.find((p) => p.id === aId)
+      if (!active_ || aId === oId) return
+      const groupFolder = active_.folder_id ?? null
+      const ids = (projectsQuery.data ?? [])
+        .filter((p) => (p.folder_id ?? null) === groupFolder)
+        .map((p) => p.id)
+      const from = ids.indexOf(aId)
+      const to = ids.indexOf(oId)
+      if (from < 0 || to < 0 || from === to) return
+      reorderProjects.mutate(arrayMove(ids, from, to))
+      return
+    }
+    if (aStr.startsWith('sfold:') && oStr.startsWith('sfold:')) {
+      const aId = Number(aStr.slice(6))
+      const oId = Number(oStr.slice(6))
+      const ids = (foldersQuery.data ?? []).map((f) => f.id)
+      const from = ids.indexOf(aId)
+      const to = ids.indexOf(oId)
+      if (from < 0 || to < 0 || from === to) return
+      reorderFolders.mutate(arrayMove(ids, from, to))
+      return
+    }
+
     const activeId = Number(active.id)
     const overId = over.id
 
