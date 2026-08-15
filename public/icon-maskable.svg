@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Stackr">
+  <rect width="512" height="512" fill="#6366f1"/>
+  <rect x="168" y="176" width="176" height="48" rx="16" fill="#ffffff" opacity="0.5"/>
+  <rect x="156" y="232" width="200" height="48" rx="16" fill="#ffffff" opacity="0.78"/>
+  <rect x="144" y="288" width="224" height="48" rx="16" fill="#ffffff"/>
+</svg>

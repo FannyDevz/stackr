@@ -1,0 +1,37 @@
+{
+  "name": "stackr-desktop",
+  "version": "1.0.0",
+  "description": "Stackr — standalone macOS app (Electron shell around the bundled Laravel app + static PHP).",
+  "main": "main.js",
+  "author": "Stackr",
+  "license": "MIT",
+  "scripts": {
+    "prepare-app": "bash scripts/prepare-app.sh",
+    "start": "electron .",
+    "dist": "npm run prepare-app && electron-builder --mac",
+    "dist:arm64": "npm run prepare-app && electron-builder --mac --arm64",
+    "dist:x64": "npm run prepare-app && electron-builder --mac --x64"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "net.myservers.stackr",
+    "productName": "Stackr",
+    "directories": { "output": "dist" },
+    "files": ["main.js"],
+    "extraResources": [
+      { "from": "app-dist", "to": "laravel" },
+      { "from": "bin/php", "to": "php/php" },
+      { "from": "php.ini", "to": "php/php.ini" }
+    ],
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    }
+  }
+}
