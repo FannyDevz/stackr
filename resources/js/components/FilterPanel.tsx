@@ -44,6 +44,15 @@ const GROUPS: { key: keyof TaskFilter; label: string; options: { v: string; labe
       { v: 'nodate', label: 'No date' },
     ],
   },
+  {
+    key: 'deferred',
+    label: 'Deferred (start date)',
+    options: [
+      { v: 'hide', label: 'Hide upcoming' },
+      { v: 'show', label: 'Show all' },
+      { v: 'only', label: 'Only deferred' },
+    ],
+  },
 ]
 
 export default function FilterPanel() {

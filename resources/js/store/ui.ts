@@ -7,12 +7,22 @@ export interface TaskFilter {
   status: 'any' | 'todo' | 'done'
   flagged: 'any' | 'yes' | 'no'
   due: 'any' | 'overdue' | 'today' | 'week' | 'hasdate' | 'nodate'
+  // Deferred = a defer/start date in the future. Hidden by default until it arrives.
+  deferred: 'hide' | 'show' | 'only'
 }
 
-export const DEFAULT_FILTER: TaskFilter = { priority: 'all', status: 'any', flagged: 'any', due: 'any' }
+export const DEFAULT_FILTER: TaskFilter = {
+  priority: 'all',
+  status: 'any',
+  flagged: 'any',
+  due: 'any',
+  deferred: 'hide',
+}
 
 export function isFilterActive(f: TaskFilter): boolean {
-  return f.priority !== 'all' || f.status !== 'any' || f.flagged !== 'any' || f.due !== 'any'
+  return (
+    f.priority !== 'all' || f.status !== 'any' || f.flagged !== 'any' || f.due !== 'any' || f.deferred !== 'hide'
+  )
 }
 
 interface UIState {

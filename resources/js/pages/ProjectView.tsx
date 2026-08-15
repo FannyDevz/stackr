@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { useState } from 'react'
-import { BookmarkPlus, Flag, FolderKanban, Pencil } from 'lucide-react'
+import { BookmarkPlus, ChevronDown, ChevronRight, Flag, FolderKanban, Pencil } from 'lucide-react'
 import PageShell from '../components/PageShell'
 import QuickAdd from '../components/QuickAdd'
 import TaskList from '../components/TaskList'
@@ -26,6 +26,14 @@ export default function ProjectView() {
   const addToast = useToast((s) => s.addToast)
   const [editingNote, setEditingNote] = useState(false)
   const [note, setNote] = useState('')
+  const [noteCollapsed, setNoteCollapsed] = useState(() => localStorage.getItem('projectNoteCollapsed') === '1')
+
+  function toggleNote() {
+    setNoteCollapsed((c) => {
+      localStorage.setItem('projectNoteCollapsed', c ? '0' : '1')
+      return !c
+    })
+  }
 
   if (isLoading || !project) {
     return <p className="px-6 py-10 text-center text-sm text-slate-400">Loading…</p>
@@ -99,17 +107,31 @@ export default function ProjectView() {
               </div>
             </div>
           ) : (
-            <div className="group relative">
-              <MarkdownView content={project.note} />
-              <button
-                onClick={() => {
-                  setNote(project.note ?? '')
-                  setEditingNote(true)
-                }}
-                className="absolute right-0 top-0 text-slate-300 opacity-0 group-hover:opacity-100 hover:text-brand"
-              >
-                <Pencil size={14} />
-              </button>
+            <div className="group">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={toggleNote}
+                  className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:text-brand"
+                  title={noteCollapsed ? 'Expand note' : 'Collapse note'}
+                >
+                  {noteCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />} Note
+                </button>
+                <button
+                  onClick={() => {
+                    setNote(project.note ?? '')
+                    setEditingNote(true)
+                  }}
+                  className="text-slate-300 opacity-0 group-hover:opacity-100 hover:text-brand"
+                  title="Edit note"
+                >
+                  <Pencil size={14} />
+                </button>
+              </div>
+              {!noteCollapsed && (
+                <div className="mt-2">
+                  <MarkdownView content={project.note} />
+                </div>
+              )}
             </div>
           )}
         </div>

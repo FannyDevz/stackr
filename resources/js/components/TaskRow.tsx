@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { format, isPast, isToday, parseISO } from 'date-fns'
-import { Check, Flag, GripVertical, Trash2 } from 'lucide-react'
+import { Check, Clock, Flag, GripVertical, Trash2 } from 'lucide-react'
 import type { Task } from '../lib/types'
 import { PRIORITY_META } from '../lib/priority'
 import { colorClass } from '../lib/colors'
@@ -37,6 +37,8 @@ export default function TaskRow({
 
   const done = task.status === 'done'
   const due = task.due_date ? parseISO(task.due_date) : null
+  const defer = task.defer_date ? parseISO(task.defer_date) : null
+  const deferred = !done && !!task.defer_date && task.defer_date > format(new Date(), 'yyyy-MM-dd')
   const selected = selectedTaskId === task.id
 
   // --- swipe (touch only) ---
@@ -160,6 +162,14 @@ export default function TaskRow({
         >
           <span className={`text-sm ${done ? 'text-slate-400 line-through' : ''}`}>{task.title}</span>
           {due && <span className={`ml-2 text-xs ${dueClass}`}>{format(due, 'MMM d')}</span>}
+          {deferred && defer && (
+            <span
+              className="ml-2 inline-flex items-center gap-0.5 align-middle text-xs text-indigo-500 dark:text-indigo-400"
+              title={`Deferred — starts ${format(defer, 'MMM d, yyyy')}`}
+            >
+              <Clock size={11} /> {format(defer, 'MMM d')}
+            </span>
+          )}
           {task.tags?.map((t) => (
             <span
               key={t.id}

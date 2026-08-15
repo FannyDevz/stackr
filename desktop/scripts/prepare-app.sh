@@ -31,7 +31,12 @@ rsync -a \
   "$ROOT/" "$DIST/"
 
 echo "▸ Installing production vendor (no dev)…"
-( cd "$DIST" && composer install --no-dev --optimize-autoloader --no-interaction )
+COMPOSER_BIN="$(command -v composer || true)"
+if [ -n "$COMPOSER_BIN" ]; then
+  ( cd "$DIST" && "$COMPOSER_BIN" install --no-dev --optimize-autoloader --no-interaction )
+else
+  echo "  composer not on PATH — bundling the copied vendor as-is (includes dev deps)."
+fi
 
 echo "▸ Writing bundled .env"
 cp "$HERE/env.desktop" "$DIST/.env"
