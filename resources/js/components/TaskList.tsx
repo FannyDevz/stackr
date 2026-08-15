@@ -15,7 +15,7 @@ function isDeferred(t: Task, today: string): boolean {
 
 /** Deferred tasks are hidden by default (until their start date), unless the
  * user chooses to show or only-show them. Applied before any other filtering. */
-function applyDeferred(tasks: Task[], mode: TaskFilter['deferred']): Task[] {
+export function applyDeferred(tasks: Task[], mode: TaskFilter['deferred']): Task[] {
   if (mode === 'show') return tasks
   const today = format(new Date(), 'yyyy-MM-dd')
   const keep = mode === 'only' ? (t: Task) => isDeferred(t, today) : (t: Task) => !isDeferred(t, today)
