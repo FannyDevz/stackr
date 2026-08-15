@@ -5,6 +5,7 @@ import PageShell from '../components/PageShell'
 import PerspectiveEditor from '../components/PerspectiveEditor'
 import TaskList from '../components/TaskList'
 import { useDeletePerspective, usePerspectives, usePerspectiveTasks } from '../hooks/queries'
+import { showConfirm } from '../store/dialog'
 
 export default function PerspectiveView() {
   const { id } = useParams()
@@ -37,8 +38,8 @@ export default function PerspectiveView() {
               <Pencil size={16} />
             </button>
             <button
-              onClick={() => {
-                if (confirm('Delete this perspective?')) {
+              onClick={async () => {
+                if (await showConfirm({ title: 'Delete this perspective?', confirmText: 'Delete', danger: true })) {
                   del.mutate(perspectiveId)
                   navigate('/inbox')
                 }

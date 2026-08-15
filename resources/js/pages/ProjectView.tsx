@@ -7,6 +7,7 @@ import TaskList from '../components/TaskList'
 import { MarkdownEditor, MarkdownView } from '../components/Markdown'
 import { useCreateTask, useFolders, useProject, useSaveTemplate, useUpdateProject } from '../hooks/queries'
 import { useToast } from '../store/toast'
+import { showPrompt } from '../store/dialog'
 
 const TYPE_LABEL: Record<string, string> = {
   sequential: 'Sequential',
@@ -59,8 +60,13 @@ export default function ProjectView() {
             <Flag size={16} fill={project.flagged ? 'currentColor' : 'none'} />
           </button>
           <button
-            onClick={() => {
-              const name = prompt('Template name', project.title)
+            onClick={async () => {
+              const name = await showPrompt({
+                title: 'Save as template',
+                label: 'Template name',
+                defaultValue: project.title,
+                confirmText: 'Save',
+              })
               if (name) saveTemplate.mutate({ name, project_id: project.id }, { onSuccess: () => addToast({ message: 'Template saved' }) })
             }}
             className="rounded p-1.5 text-slate-400 hover:text-brand"

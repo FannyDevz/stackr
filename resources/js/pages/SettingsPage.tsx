@@ -8,6 +8,7 @@ import { api, ensureCsrf } from '../lib/api'
 import { NAV_META, NAV_TOGGLE_KEYS } from '../lib/navmeta'
 import { isPushSupported, isSubscribed, subscribeToPush, unsubscribeFromPush } from '../lib/push'
 import { isDesktop } from '../lib/env'
+import { showConfirm } from '../store/dialog'
 
 export default function SettingsPage() {
   const { user, updateSettings } = useAuth()
@@ -121,7 +122,15 @@ export default function SettingsPage() {
   }
 
   async function handleImport(file: File) {
-    if (!confirm('Importing will REPLACE all of your current data with the backup. Continue?')) return
+    if (
+      !(await showConfirm({
+        title: 'Replace all data?',
+        message: 'Importing will REPLACE all of your current data with the backup.',
+        confirmText: 'Import & replace',
+        danger: true,
+      }))
+    )
+      return
     setBusy(true)
     setMsg(null)
     try {

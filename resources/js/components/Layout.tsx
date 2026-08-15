@@ -20,6 +20,7 @@ import Logo from './Logo'
 import ShortcutsHelp from './ShortcutsHelp'
 import Toaster from './Toaster'
 import BulkBar from './BulkBar'
+import DialogHost from './DialogHost'
 import { PageSkeleton } from './Skeleton'
 import { useUI } from '../store/ui'
 import { useDnd } from '../store/dnd'
@@ -156,6 +157,7 @@ export default function Layout() {
       {helpOpen && <ShortcutsHelp />}
       <BulkBar />
       <Toaster />
+      <DialogHost />
     </DndContext>
   )
 }

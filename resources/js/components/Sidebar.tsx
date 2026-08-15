@@ -42,6 +42,7 @@ import TemplatesModal from './TemplatesModal'
 import Logo from './Logo'
 import { colorClass } from '../lib/colors'
 import { NAV_META } from '../lib/navmeta'
+import { showPrompt } from '../store/dialog'
 
 const navItemCls =
   'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800'
@@ -148,8 +149,8 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
         <Section
           title="Projects"
-          onAdd={() => {
-            const title = prompt('New project name')
+          onAdd={async () => {
+            const title = await showPrompt({ title: 'New project', label: 'Project name', confirmText: 'Create' })
             if (title) createProject.mutate({ title })
           }}
           extra={
@@ -163,8 +164,8 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               </button>
               <button
                 title="New folder"
-                onClick={() => {
-                  const name = prompt('New folder name')
+                onClick={async () => {
+                  const name = await showPrompt({ title: 'New folder', label: 'Folder name', confirmText: 'Create' })
                   if (name) createFolder.mutate(name)
                 }}
                 className="text-slate-400 hover:text-brand"
@@ -213,8 +214,8 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <Section
           title="Tags"
           titleHint={NAV_META.tags.desc}
-          onAdd={() => {
-            const name = prompt('New tag name')
+          onAdd={async () => {
+            const name = await showPrompt({ title: 'New tag', label: 'Tag name', confirmText: 'Create' })
             if (name) createTag.mutate(name)
           }}
         >

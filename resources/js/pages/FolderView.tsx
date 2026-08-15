@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Flag, Folder, Pencil, Trash2 } from 'lucide-react'
 import PageShell from '../components/PageShell'
 import { useDeleteFolder, useFolders, useProjects, useUpdateFolder } from '../hooks/queries'
+import { showConfirm, showPrompt } from '../store/dialog'
 
 export default function FolderView() {
   const { id } = useParams()
@@ -22,9 +23,14 @@ export default function FolderView() {
         folder && (
           <div className="flex items-center gap-1">
             <button
-              onClick={() => {
-                const name = prompt('Rename folder', folder.name)
-                if (name && name.trim() && name !== folder.name) update.mutate({ id: folder.id, name: name.trim() })
+              onClick={async () => {
+                const name = await showPrompt({
+                  title: 'Rename folder',
+                  label: 'Folder name',
+                  defaultValue: folder.name,
+                  confirmText: 'Rename',
+                })
+                if (name && name !== folder.name) update.mutate({ id: folder.id, name })
               }}
               className="rounded p-1.5 text-slate-400 hover:text-brand"
               title="Rename folder"
@@ -32,8 +38,15 @@ export default function FolderView() {
               <Pencil size={16} />
             </button>
             <button
-              onClick={() => {
-                if (confirm(`Delete folder “${folder.name}”? Its projects are kept and moved out of the folder.`)) {
+              onClick={async () => {
+                if (
+                  await showConfirm({
+                    title: `Delete folder “${folder.name}”?`,
+                    message: 'Its projects are kept and moved out of the folder.',
+                    confirmText: 'Delete',
+                    danger: true,
+                  })
+                ) {
                   del.mutate(folder.id)
                   navigate('/projects')
                 }
