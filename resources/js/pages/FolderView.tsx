@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Flag, Folder, Pencil, Trash2 } from 'lucide-react'
+import { Flag, Folder, Pencil, Plus, Trash2 } from 'lucide-react'
 import PageShell from '../components/PageShell'
-import { useDeleteFolder, useFolders, useProjects, useUpdateFolder } from '../hooks/queries'
+import { useCreateProject, useDeleteFolder, useFolders, useProjects, useUpdateFolder } from '../hooks/queries'
 import { showConfirm, showPrompt } from '../store/dialog'
 
 export default function FolderView() {
@@ -12,7 +12,13 @@ export default function FolderView() {
   const { data: projects, isLoading } = useProjects({ folder_id: folderId })
   const update = useUpdateFolder()
   const del = useDeleteFolder()
+  const create = useCreateProject()
   const navigate = useNavigate()
+
+  async function addProject() {
+    const title = await showPrompt({ title: 'New project', label: 'Project name', confirmText: 'Create' })
+    if (title) create.mutate({ title, folder_id: folderId })
+  }
 
   return (
     <PageShell
@@ -22,6 +28,13 @@ export default function FolderView() {
       actions={
         folder && (
           <div className="flex items-center gap-1">
+            <button
+              onClick={addProject}
+              className="rounded p-1.5 text-slate-400 hover:text-brand"
+              title="Add project"
+            >
+              <Plus size={16} />
+            </button>
             <button
               onClick={async () => {
                 const name = await showPrompt({
@@ -63,7 +76,15 @@ export default function FolderView() {
       {isLoading ? (
         <p className="px-4 py-10 text-center text-sm text-slate-400">Loading…</p>
       ) : !projects?.length ? (
-        <p className="px-4 py-10 text-center text-sm text-slate-400">No projects in this folder yet.</p>
+        <div className="px-4 py-10 text-center">
+          <p className="text-sm text-slate-400">No projects in this folder yet.</p>
+          <button
+            onClick={addProject}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+          >
+            <Plus size={15} /> Add project
+          </button>
+        </div>
       ) : (
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {projects.map((p) => (

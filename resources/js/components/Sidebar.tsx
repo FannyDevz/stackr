@@ -13,6 +13,7 @@ import {
   Inbox,
   Keyboard,
   LayoutTemplate,
+  List,
   LogOut,
   Moon,
   MoreVertical,
@@ -155,6 +156,15 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           }}
           extra={
             <>
+              {!hidden.allProjects && (
+                <NavLink
+                  to="/projects"
+                  title={NAV_META.allProjects.desc}
+                  className={({ isActive }) => `text-slate-400 hover:text-brand ${isActive ? '!text-brand' : ''}`}
+                >
+                  <List size={14} />
+                </NavLink>
+              )}
               <button
                 title="Project templates"
                 onClick={() => setTemplatesOpen(true)}
@@ -175,11 +185,6 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             </>
           }
         >
-          {!hidden.allProjects && (
-            <NavLink to="/projects" className={link} title={NAV_META.allProjects.desc}>
-              <span className="text-slate-400">All projects</span>
-            </NavLink>
-          )}
           {!hidden.byProject && (
             <NavLink to="/by-project" className={link} title={NAV_META.byProject.desc}>
               <span className="text-slate-400">By project</span>
