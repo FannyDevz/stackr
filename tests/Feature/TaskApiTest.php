@@ -562,6 +562,28 @@ class TaskApiTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_project_archive_hides_it_from_the_default_list(): void
+    {
+        $user = User::factory()->create();
+        $a = Project::factory()->for($user)->create();
+        $b = Project::factory()->for($user)->create();
+
+        $this->actingAs($user)->postJson("/api/projects/{$b->id}/archive")
+            ->assertOk()->assertJsonPath('data.archived', true);
+
+        $active = collect($this->actingAs($user)->getJson('/api/projects')->json('data'))->pluck('id');
+        $this->assertTrue($active->contains($a->id));
+        $this->assertFalse($active->contains($b->id), 'archived project should be hidden by default');
+
+        $onlyArchived = collect($this->actingAs($user)->getJson('/api/projects?archived=only')->json('data'))->pluck('id');
+        $this->assertTrue($onlyArchived->contains($b->id));
+        $this->assertFalse($onlyArchived->contains($a->id));
+
+        $this->actingAs($user)->postJson("/api/projects/{$b->id}/unarchive")
+            ->assertOk()->assertJsonPath('data.archived', false);
+        $this->assertNull($b->fresh()->archived_at);
+    }
+
     public function test_realtime_stream_requires_authentication(): void
     {
         $this->getJson('/api/stream')->assertUnauthorized();

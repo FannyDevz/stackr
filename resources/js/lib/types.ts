@@ -60,6 +60,7 @@ export interface Project {
   note: string | null
   type: ProjectType
   status: ProjectStatus
+  archived?: boolean
   defer_date: string | null
   due_date: string | null
   flagged: boolean

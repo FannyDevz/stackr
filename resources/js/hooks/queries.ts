@@ -238,6 +238,20 @@ export function useReorderProjects() {
   })
 }
 
+export function useArchiveProject() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, archived }: { id: number; archived: boolean }) =>
+      withCsrf(async () =>
+        unwrap<Project>((await api.post(`/projects/${id}/${archived ? 'archive' : 'unarchive'}`)).data)
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] })
+      qc.invalidateQueries({ queryKey: ['project'] })
+    },
+  })
+}
+
 export function useReorderFolders() {
   const qc = useQueryClient()
   return useMutation({

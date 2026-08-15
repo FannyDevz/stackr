@@ -24,6 +24,14 @@ class ProjectController extends Controller
             $query->where('flagged', $request->boolean('flagged'));
         }
 
+        // Archived projects are hidden unless explicitly requested.
+        $archived = $request->query('archived');
+        if ($archived === 'only') {
+            $query->whereNotNull('archived_at');
+        } elseif ($archived !== 'all') {
+            $query->whereNull('archived_at');
+        }
+
         return ProjectResource::collection($query->orderBy('position')->orderBy('title')->get());
     }
 
@@ -113,6 +121,29 @@ class ProjectController extends Controller
             'review_interval_days' => 'nullable|integer|min:1',
             'position' => 'integer',
         ]);
+    }
+
+    public function archive(Request $request, Project $project)
+    {
+        $this->authorizeOwner($project, $request);
+        $project->update(['archived_at' => now()]);
+
+        return $this->withCounts($project);
+    }
+
+    public function unarchive(Request $request, Project $project)
+    {
+        $this->authorizeOwner($project, $request);
+        $project->update(['archived_at' => null]);
+
+        return $this->withCounts($project);
+    }
+
+    private function withCounts(Project $project): ProjectResource
+    {
+        return new ProjectResource(
+            $project->loadCount(['tasks', 'tasks as remaining_count' => fn ($q) => $q->where('status', 'todo')])
+        );
     }
 
     public function reorder(Request $request)

@@ -16,6 +16,8 @@ class ProjectResource extends JsonResource
             'note' => $this->note,
             'type' => $this->type,
             'status' => $this->status,
+            'archived' => $this->archived_at !== null,
+            'archived_at' => $this->archived_at,
             'defer_date' => $this->defer_date?->toDateString(),
             'due_date' => $this->due_date?->toDateString(),
             'flagged' => $this->flagged,

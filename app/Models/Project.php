@@ -12,7 +12,7 @@ class Project extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'folder_id', 'title', 'note', 'type', 'status',
+        'user_id', 'folder_id', 'title', 'note', 'type', 'status', 'archived_at',
         'defer_date', 'due_date', 'flagged', 'review_interval_days',
         'last_reviewed_at', 'next_review_at', 'completed_at', 'position',
     ];
@@ -29,6 +29,7 @@ class Project extends Model
         return [
             'defer_date' => 'date',
             'due_date' => 'date',
+            'archived_at' => 'datetime',
             'flagged' => 'boolean',
             'review_interval_days' => 'integer',
             'last_reviewed_at' => 'datetime',

@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('projects/reorder', [ProjectController::class, 'reorder']);
     Route::apiResource('projects', ProjectController::class);
     Route::post('projects/{project}/review', [ProjectController::class, 'review']);
+    Route::post('projects/{project}/archive', [ProjectController::class, 'archive']);
+    Route::post('projects/{project}/unarchive', [ProjectController::class, 'unarchive']);
 
     // Project templates
     Route::get('templates', [TemplateController::class, 'index']);

@@ -5,7 +5,8 @@ import PageShell from '../components/PageShell'
 import QuickAdd from '../components/QuickAdd'
 import TaskList from '../components/TaskList'
 import { MarkdownEditor, MarkdownView } from '../components/Markdown'
-import { useCreateTask, useFolders, useProject, useSaveTemplate, useUpdateProject } from '../hooks/queries'
+import { useCreateTask, useProject, useSaveTemplate, useUpdateProject } from '../hooks/queries'
+import ProjectEditModal from '../components/ProjectEditModal'
 import { useToast } from '../store/toast'
 import { showPrompt } from '../store/dialog'
 
@@ -21,9 +22,9 @@ export default function ProjectView() {
   const { data: project, isLoading } = useProject(projectId)
   const create = useCreateTask()
   const update = useUpdateProject()
-  const folders = useFolders()
   const saveTemplate = useSaveTemplate()
   const addToast = useToast((s) => s.addToast)
+  const [editOpen, setEditOpen] = useState(false)
   const [editingNote, setEditingNote] = useState(false)
   const [note, setNote] = useState('')
   const [noteCollapsed, setNoteCollapsed] = useState(() => localStorage.getItem('projectNoteCollapsed') === '1')
@@ -43,23 +44,17 @@ export default function ProjectView() {
     <PageShell
       title={project.title}
       icon={<FolderKanban />}
-      subtitle={`${TYPE_LABEL[project.type]} · ${project.remaining_count ?? 0} remaining`}
+      subtitle={`${TYPE_LABEL[project.type]} · ${project.remaining_count ?? 0} remaining${project.archived ? ' · Archived' : ''}`}
       filter
       actions={
         <div className="flex items-center gap-1">
-          <select
-            value={project.folder_id ?? ''}
-            onChange={(e) => update.mutate({ id: project.id, folder_id: e.target.value ? Number(e.target.value) : null })}
-            className="rounded-md border border-slate-200 dark:border-slate-700 bg-transparent px-2 py-1 text-xs outline-none"
-            title="Folder"
+          <button
+            onClick={() => setEditOpen(true)}
+            className="rounded p-1.5 text-slate-400 hover:text-brand"
+            title="Edit project"
           >
-            <option value="">No folder</option>
-            {folders.data?.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
-          </select>
+            <Pencil size={16} />
+          </button>
           <button
             onClick={() => update.mutate({ id: project.id, flagged: !project.flagged })}
             className={`rounded p-1.5 ${project.flagged ? 'text-amber-500' : 'text-slate-400 hover:text-amber-500'}`}
@@ -148,6 +143,7 @@ export default function ProjectView() {
         </button>
       )}
       <TaskList tasks={project.tasks ?? []} reorderable />
+      {editOpen && <ProjectEditModal project={project} onClose={() => setEditOpen(false)} />}
     </PageShell>
   )
 }
