@@ -605,6 +605,37 @@ class TaskApiTest extends TestCase
         $this->assertFalse($ids->contains($t3->id), 'tasks outside the selected projects are excluded');
     }
 
+    public function test_repeating_task_with_after_count_stops(): void
+    {
+        $user = User::factory()->create();
+        $task = Task::factory()->for($user)->create([
+            'due_date' => today(),
+            'repeat_rule' => ['frequency' => 'daily', 'interval' => 1, 'ends' => 'after', 'count' => 2],
+        ]);
+
+        $this->actingAs($user)->postJson("/api/tasks/{$task->id}/complete", ['completed' => true])->assertOk();
+        $this->assertSame(2, Task::count()); // original + one more occurrence
+        $next = Task::where('status', 'todo')->first();
+        $this->assertSame(1, $next->repeat_rule['count']);
+
+        // The last occurrence (count 1) does not spawn another.
+        $this->actingAs($user)->postJson("/api/tasks/{$next->id}/complete", ['completed' => true])->assertOk();
+        $this->assertSame(2, Task::count());
+    }
+
+    public function test_repeating_task_stops_after_end_date(): void
+    {
+        $user = User::factory()->create();
+        $task = Task::factory()->for($user)->create([
+            'due_date' => today(),
+            'repeat_rule' => ['frequency' => 'daily', 'interval' => 1, 'ends' => 'on', 'until' => today()->toDateString()],
+        ]);
+
+        // Next occurrence would be tomorrow, past the until date → no spawn.
+        $this->actingAs($user)->postJson("/api/tasks/{$task->id}/complete", ['completed' => true])->assertOk();
+        $this->assertSame(1, Task::count());
+    }
+
     public function test_realtime_stream_requires_authentication(): void
     {
         $this->getJson('/api/stream')->assertUnauthorized();

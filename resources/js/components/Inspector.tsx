@@ -53,13 +53,32 @@ export default function Inspector() {
   if (!selectedTaskId) return null
 
   const tagIds = new Set(task?.tags?.map((t) => t.id) ?? [])
-  const repeat = (task?.repeat_rule as { frequency?: string; interval?: number } | null) ?? null
+  const repeat =
+    (task?.repeat_rule as {
+      frequency?: string
+      interval?: number
+      ends?: string
+      count?: number
+      until?: string
+    } | null) ?? null
+  const repeatEnd =
+    repeat?.ends === 'after'
+      ? ` · ${repeat.count ?? 1}×`
+      : repeat?.ends === 'on' && repeat.until
+        ? ` · until ${repeat.until}`
+        : ''
   const repeatLabel = repeat?.frequency
-    ? `Every ${repeat.interval ?? 1} ${FREQ_LABEL[repeat.frequency] ?? repeat.frequency}${(repeat.interval ?? 1) > 1 ? 's' : ''}`
+    ? `Every ${repeat.interval ?? 1} ${FREQ_LABEL[repeat.frequency] ?? repeat.frequency}${(repeat.interval ?? 1) > 1 ? 's' : ''}${repeatEnd}`
     : 'Never'
 
   function save(patch: Record<string, unknown>) {
     if (selectedTaskId) update.mutate({ id: selectedTaskId, ...patch })
+  }
+
+  function setRepeat(patch: Record<string, unknown>) {
+    const cur = (task?.repeat_rule as Record<string, unknown> | null) ?? {}
+    const next = { ...cur, ...patch }
+    save({ repeat_rule: next.frequency ? next : null })
   }
 
   function toggleTag(id: number) {
@@ -344,34 +363,75 @@ export default function Inspector() {
           </Group>
 
           <Group label="Repeat">
-            <div className="flex gap-2">
-              <select
-                value={repeat?.frequency ?? ''}
-                onChange={(e) => {
-                  const f = e.target.value
-                  save({ repeat_rule: f ? { frequency: f, interval: repeat?.interval ?? 1 } : null })
-                }}
-                className={dateCls}
-              >
-                <option value="">Never</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <select
+                  value={repeat?.frequency ?? ''}
+                  onChange={(e) => {
+                    const f = e.target.value
+                    if (!f) return save({ repeat_rule: null })
+                    setRepeat({ frequency: f, interval: repeat?.interval ?? 1 })
+                  }}
+                  className={dateCls}
+                >
+                  <option value="">Never</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+                {repeat?.frequency && (
+                  <input
+                    type="number"
+                    min={1}
+                    defaultValue={repeat.interval ?? 1}
+                    onBlur={(e) => setRepeat({ interval: Math.max(1, Number(e.target.value) || 1) })}
+                    className={`${dateCls} w-20`}
+                    title="Every N periods"
+                  />
+                )}
+              </div>
+
               {repeat?.frequency && (
-                <input
-                  type="number"
-                  min={1}
-                  defaultValue={repeat.interval ?? 1}
-                  onBlur={(e) =>
-                    save({
-                      repeat_rule: { frequency: repeat.frequency, interval: Math.max(1, Number(e.target.value) || 1) },
-                    })
-                  }
-                  className={`${dateCls} w-20`}
-                  title="Every N periods"
-                />
+                <div className="flex gap-2">
+                  <select
+                    value={repeat?.ends ?? 'never'}
+                    onChange={(e) => {
+                      const ends = e.target.value
+                      const patch: Record<string, unknown> = { ends }
+                      if (ends === 'never') {
+                        patch.count = undefined
+                        patch.until = undefined
+                      }
+                      if (ends === 'after' && !repeat?.count) patch.count = 5
+                      setRepeat(patch)
+                    }}
+                    className={dateCls}
+                    title="When the repeat stops"
+                  >
+                    <option value="never">Ends: Never</option>
+                    <option value="after">Ends: After…</option>
+                    <option value="on">Ends: On date</option>
+                  </select>
+                  {repeat?.ends === 'after' && (
+                    <input
+                      type="number"
+                      min={1}
+                      defaultValue={repeat.count ?? 5}
+                      onBlur={(e) => setRepeat({ count: Math.max(1, Number(e.target.value) || 1) })}
+                      className={`${dateCls} w-24`}
+                      title="Number of times"
+                    />
+                  )}
+                  {repeat?.ends === 'on' && (
+                    <input
+                      type="date"
+                      value={repeat.until ?? ''}
+                      onChange={(e) => setRepeat({ until: e.target.value || null })}
+                      className={dateCls}
+                    />
+                  )}
+                </div>
               )}
             </div>
           </Group>
