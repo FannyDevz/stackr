@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
 import type { Perspective } from '../lib/types'
-import { useCreatePerspective, useTags, useUpdatePerspective } from '../hooks/queries'
+import { useCreatePerspective, useProjects, useTags, useUpdatePerspective } from '../hooks/queries'
 
 interface Rules {
   availability?: string
@@ -12,6 +12,7 @@ interface Rules {
   min_priority?: string
   search?: string
   tag_ids?: number[]
+  project_ids?: number[]
 }
 
 export default function PerspectiveEditor({
@@ -22,6 +23,7 @@ export default function PerspectiveEditor({
   onClose: () => void
 }) {
   const tags = useTags()
+  const projects = useProjects({ status: 'active' })
   const create = useCreatePerspective()
   const update = useUpdatePerspective()
   const navigate = useNavigate()
@@ -35,12 +37,17 @@ export default function PerspectiveEditor({
   const [minPriority, setMinPriority] = useState(initial.min_priority ?? '')
   const [search, setSearch] = useState(initial.search ?? '')
   const [tagIds, setTagIds] = useState<number[]>(initial.tag_ids ?? [])
+  const [projectIds, setProjectIds] = useState<number[]>(initial.project_ids ?? [])
 
   const busy = create.isPending || update.isPending
   const isEdit = !!perspective
 
   function toggleTag(id: number) {
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
+  }
+
+  function toggleProject(id: number) {
+    setProjectIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
   }
 
   function save() {
@@ -52,6 +59,7 @@ export default function PerspectiveEditor({
     if (minPriority && minPriority !== 'none') filter_rules.min_priority = minPriority
     if (search.trim()) filter_rules.search = search.trim()
     if (tagIds.length) filter_rules.tag_ids = tagIds
+    if (projectIds.length) filter_rules.project_ids = projectIds
 
     if (isEdit) {
       update.mutate(
@@ -156,6 +164,28 @@ export default function PerspectiveEditor({
                 ))
               ) : (
                 <span className="text-xs text-slate-400">No tags yet</span>
+              )}
+            </div>
+          </Field>
+
+          <Field label="Projects">
+            <div className="flex flex-wrap gap-1.5">
+              {projects.data?.length ? (
+                projects.data.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => toggleProject(p.id)}
+                    className={`rounded-full px-2.5 py-1 text-xs ${
+                      projectIds.includes(p.id)
+                        ? 'bg-brand text-white'
+                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 hover:bg-slate-200'
+                    }`}
+                  >
+                    {p.title}
+                  </button>
+                ))
+              ) : (
+                <span className="text-xs text-slate-400">No projects yet</span>
               )}
             </div>
           </Field>

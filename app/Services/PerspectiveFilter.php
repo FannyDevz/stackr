@@ -14,6 +14,7 @@ class PerspectiveFilter
      *  - flagged: bool
      *  - inbox: bool  (tasks with no project)
      *  - project_id: int
+     *  - project_ids: int[]  (tasks in any of these projects)
      *  - tag_ids: int[]
      *  - due_within_days: int
      *  - status: todo|done|dropped
@@ -52,6 +53,10 @@ class PerspectiveFilter
 
         if (! empty($rules['project_id'])) {
             $query->where('project_id', $rules['project_id']);
+        }
+
+        if (! empty($rules['project_ids']) && is_array($rules['project_ids'])) {
+            $query->whereIn('project_id', $rules['project_ids']);
         }
 
         if (! empty($rules['status'])) {

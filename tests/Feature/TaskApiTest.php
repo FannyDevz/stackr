@@ -584,6 +584,27 @@ class TaskApiTest extends TestCase
         $this->assertNull($b->fresh()->archived_at);
     }
 
+    public function test_perspective_filters_by_multiple_projects(): void
+    {
+        $user = User::factory()->create();
+        $p1 = Project::factory()->for($user)->create();
+        $p2 = Project::factory()->for($user)->create();
+        $p3 = Project::factory()->for($user)->create();
+        $t1 = Task::factory()->for($user)->create(['project_id' => $p1->id, 'status' => 'todo']);
+        $t2 = Task::factory()->for($user)->create(['project_id' => $p2->id, 'status' => 'todo']);
+        $t3 = Task::factory()->for($user)->create(['project_id' => $p3->id, 'status' => 'todo']);
+
+        $persp = $user->perspectives()->create([
+            'name' => 'Two projects',
+            'filter_rules' => ['availability' => 'remaining', 'project_ids' => [$p1->id, $p2->id]],
+        ]);
+
+        $ids = collect($this->actingAs($user)->getJson("/api/perspectives/{$persp->id}/tasks")->json('data'))->pluck('id');
+        $this->assertTrue($ids->contains($t1->id));
+        $this->assertTrue($ids->contains($t2->id));
+        $this->assertFalse($ids->contains($t3->id), 'tasks outside the selected projects are excluded');
+    }
+
     public function test_realtime_stream_requires_authentication(): void
     {
         $this->getJson('/api/stream')->assertUnauthorized();
