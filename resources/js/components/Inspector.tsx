@@ -16,7 +16,8 @@ import {
 import { useToast } from '../store/toast'
 import { MarkdownEditor, MarkdownView } from './Markdown'
 import { PRIORITIES, PRIORITY_META } from '../lib/priority'
-import { COLOR_DOT, TASK_COLORS, colorClass } from '../lib/colors'
+import { colorClass } from '../lib/colors'
+import ColorPicker from './ColorPicker'
 
 const FREQ_LABEL: Record<string, string> = { daily: 'day', weekly: 'week', monthly: 'month', yearly: 'year' }
 
@@ -209,7 +210,9 @@ export default function Inspector() {
               <div className="space-y-3">
                 {task.comments.map((c) => (
                   <div key={c.id} className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
-                    <MarkdownView content={c.body} />
+                    <p className="whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-300">
+                      {c.body}
+                    </p>
                     <div className="mt-1 text-[11px] text-slate-400">{format(parseISO(c.created_at), 'MMM d, HH:mm')}</div>
                   </div>
                 ))}
@@ -337,27 +340,7 @@ export default function Inspector() {
           </Group>
 
           <Group label="Color">
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => save({ color: null })}
-                className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] text-slate-400 ${
-                  !task.color ? 'border-brand ring-2 ring-brand' : 'border-slate-300 dark:border-slate-600'
-                }`}
-                title="No color"
-              >
-                ✕
-              </button>
-              {TASK_COLORS.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => save({ color: c })}
-                  className={`h-6 w-6 rounded-full ${COLOR_DOT[c]} ${
-                    task.color === c ? 'ring-2 ring-slate-400 ring-offset-2 dark:ring-offset-slate-900' : ''
-                  }`}
-                  title={c}
-                />
-              ))}
-            </div>
+            <ColorPicker value={task.color} onChange={(c) => save({ color: c })} />
           </Group>
 
           <Group label="Repeat">
@@ -437,7 +420,13 @@ export default function Inspector() {
                   </div>
                 </div>
               ))}
-              <MarkdownEditor value={comment} onChange={setComment} height={120} placeholder="Add a comment…" />
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Add a comment…"
+                rows={3}
+                className="w-full resize-y rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-brand dark:border-slate-700"
+              />
               <button
                 disabled={!comment.trim()}
                 onClick={() => {

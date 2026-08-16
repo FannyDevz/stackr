@@ -160,7 +160,7 @@ export default function Layout() {
           <div className="fixed inset-0 z-40 md:hidden">
             <div className="absolute inset-0 bg-black/40" onClick={() => setMobileNav(false)} />
             <div className="absolute left-0 top-0 h-full shadow-xl">
-              <Sidebar onNavigate={() => setMobileNav(false)} />
+              <Sidebar onNavigate={() => setMobileNav(false)} forceFull />
             </div>
           </div>
         )}

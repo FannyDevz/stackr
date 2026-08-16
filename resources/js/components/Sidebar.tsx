@@ -20,6 +20,8 @@ import {
   LogOut,
   Moon,
   MoreVertical,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   RefreshCw,
   Search,
@@ -54,11 +56,14 @@ const activeCls = 'bg-brand/10 !text-brand font-medium'
 const menuItemCls =
   'flex w-full items-center gap-2 px-3 py-1.5 text-left text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
 
-export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+export default function Sidebar({ onNavigate, forceFull = false }: { onNavigate?: () => void; forceFull?: boolean }) {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useUI()
   const setHelpOpen = useUI((s) => s.setHelpOpen)
   const hidden = useUI((s) => s.hiddenNav)
+  const sidebarOpen = useUI((s) => s.sidebarOpen)
+  const toggleSidebar = useUI((s) => s.toggleSidebar)
+  const mini = !forceFull && !sidebarOpen
   const navigate = useNavigate()
 
   const projects = useProjects({ status: 'active' })
@@ -114,6 +119,65 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     return `${navItemCls} ${isActive ? activeCls : ''}`
   }
 
+  // --- Mini (collapsed) rail: icon-only nav ---
+  if (mini) {
+    const items = [
+      { to: '/search', icon: Search, label: 'Search', show: true },
+      { to: '/inbox', icon: Inbox, label: 'Inbox', badge: counts?.inbox, show: true },
+      { to: '/today', icon: Star, label: 'Today', badge: counts?.today, show: true },
+      { to: '/forecast', icon: CalendarClock, label: 'Forecast', show: true },
+      { to: '/calendar', icon: CalendarDays, label: 'Calendar', show: !hidden.calendar },
+      { to: '/flagged', icon: Flag, label: 'Flagged', badge: counts?.flagged, show: !hidden.flagged },
+      { to: '/review', icon: RefreshCw, label: 'Review', badge: counts?.review, show: !hidden.review },
+      { to: '/completed', icon: CheckCheck, label: 'Completed', show: true },
+      { to: '/projects', icon: List, label: 'Projects', show: !hidden.allProjects },
+    ].filter((i) => i.show)
+
+    return (
+      <aside
+        className="flex h-full w-14 shrink-0 flex-col items-center gap-1 border-r border-slate-200 bg-white py-3 dark:border-slate-800 dark:bg-slate-900"
+        onClick={(e) => {
+          if ((e.target as HTMLElement).closest('a')) onNavigate?.()
+        }}
+      >
+        <button
+          onClick={toggleSidebar}
+          title="Expand sidebar"
+          className="mb-1 rounded-lg p-1.5 hover:bg-slate-200/60 dark:hover:bg-slate-800"
+        >
+          <Logo size={22} />
+        </button>
+        {items.map((n) => (
+          <NavLink
+            key={n.to}
+            to={n.to}
+            title={n.label}
+            className={({ isActive }) =>
+              `relative rounded-lg p-2 ${
+                isActive ? 'bg-brand/10 text-brand' : 'text-slate-500 hover:bg-slate-200/60 dark:hover:bg-slate-800'
+              }`
+            }
+          >
+            <n.icon size={18} />
+            {!!n.badge && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-brand" />}
+          </NavLink>
+        ))}
+        <div className="mt-auto flex flex-col items-center gap-2">
+          <button
+            onClick={toggleSidebar}
+            title="Expand sidebar"
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
+          >
+            <PanelLeftOpen size={18} />
+          </button>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">
+            {user?.name?.[0]?.toUpperCase() ?? '?'}
+          </div>
+        </div>
+      </aside>
+    )
+  }
+
   return (
     <aside
       className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
@@ -124,6 +188,15 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex items-center gap-2 px-4 py-3">
         <Logo size={22} />
         <span className="font-semibold">Stackr</span>
+        {!forceFull && (
+          <button
+            onClick={toggleSidebar}
+            title="Collapse sidebar"
+            className="ml-auto rounded-lg p-1.5 text-slate-400 hover:bg-slate-200/60 hover:text-brand dark:hover:bg-slate-800"
+          >
+            <PanelLeftClose size={16} />
+          </button>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-4">

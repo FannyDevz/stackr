@@ -3,8 +3,8 @@ import { Pencil, Tag as TagIcon, Trash2 } from 'lucide-react'
 import PageShell from '../components/PageShell'
 import QuickAdd from '../components/QuickAdd'
 import TaskList from '../components/TaskList'
+import ColorPicker from '../components/ColorPicker'
 import { useCreateTask, useDeleteTag, useTags, useTasks, useUpdateTag } from '../hooks/queries'
-import { COLOR_DOT, TASK_COLORS } from '../lib/colors'
 import { showConfirm, showPrompt } from '../store/dialog'
 
 export default function TagView() {
@@ -62,25 +62,11 @@ export default function TagView() {
               <Trash2 size={16} />
             </button>
             <span className="mx-1 h-4 w-px bg-slate-200 dark:bg-slate-700" />
-            <button
-              onClick={() => updateTag.mutate({ id: tag.id, color: null })}
-              className={`flex h-5 w-5 items-center justify-center rounded-full border text-[9px] text-slate-400 ${
-                !tag.color ? 'border-brand ring-1 ring-brand' : 'border-slate-300 dark:border-slate-600'
-              }`}
-              title="No color"
-            >
-              ✕
-            </button>
-            {TASK_COLORS.map((c) => (
-              <button
-                key={c}
-                onClick={() => updateTag.mutate({ id: tag.id, color: c })}
-                className={`h-5 w-5 rounded-full ${COLOR_DOT[c]} ${
-                  tag.color === c ? 'ring-2 ring-slate-400 ring-offset-1 dark:ring-offset-slate-950' : ''
-                }`}
-                title={c}
-              />
-            ))}
+            <ColorPicker
+              value={tag.color}
+              onChange={(c) => updateTag.mutate({ id: tag.id, color: c })}
+              title="Tag color"
+            />
           </div>
         )
       }

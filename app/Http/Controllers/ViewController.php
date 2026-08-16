@@ -98,9 +98,10 @@ class ViewController extends Controller
     {
         $user = $request->user();
 
+        $todayDate = $user->todayDate();
         $projects = $user->projects()
             ->where('status', 'active')
-            ->withCount(['tasks as remaining_count' => fn ($q) => $q->where('status', 'todo')])
+            ->withCount(['tasks as remaining_count' => fn ($q) => $q->available($todayDate)])
             ->with([
                 'tasks' => fn ($q) => $q->whereNull('parent_id')->where('status', 'todo')->orderBy('position'),
                 'tasks.tags',
@@ -128,18 +129,21 @@ class ViewController extends Controller
 
         $todayDate = $user->todayDate();
 
+        // Counts mirror what the lists actually show — deferred (future start
+        // date) tasks are excluded by default via the available() scope.
         $today = $user->tasks()->available($todayDate)
             ->where(fn ($q) => $q->whereDate('due_date', '<=', $todayDate)->orWhere('flagged', true))
             ->count();
 
-        $overdue = $user->tasks()->where('status', 'todo')
+        $overdue = $user->tasks()->available($todayDate)
             ->whereNotNull('due_date')
             ->whereDate('due_date', '<', $todayDate)
             ->count();
 
-        $flagged = $user->tasks()->where('flagged', true)->where('status', 'todo')->count();
+        $flagged = $user->tasks()->available($todayDate)->where('flagged', true)->count();
 
-        $inbox = $user->tasks()->whereNull('project_id')->whereNull('parent_id')->where('status', 'todo')->count();
+        $inbox = $user->tasks()->available($todayDate)
+            ->whereNull('project_id')->whereNull('parent_id')->count();
 
         $review = $user->projects()->where('status', 'active')
             ->whereNotNull('review_interval_days')

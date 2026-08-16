@@ -11,8 +11,9 @@ class ProjectController extends Controller
 {
     public function index(Request $request)
     {
+        $today = $request->user()->todayDate();
         $query = $request->user()->projects()
-            ->withCount(['tasks', 'tasks as remaining_count' => fn ($q) => $q->where('status', 'todo')]);
+            ->withCount(['tasks', 'tasks as remaining_count' => fn ($q) => $q->available($today)]);
 
         if ($request->filled('folder_id')) {
             $query->where('folder_id', $request->folder_id);
@@ -47,11 +48,12 @@ class ProjectController extends Controller
     {
         $this->authorizeOwner($project, $request);
 
+        $today = $request->user()->todayDate();
         $project->load([
             'tasks' => fn ($q) => $q->whereNull('parent_id')->orderBy('position'),
             'tasks.tags',
             'tasks.children.tags',
-        ])->loadCount(['tasks', 'tasks as remaining_count' => fn ($q) => $q->where('status', 'todo')]);
+        ])->loadCount(['tasks', 'tasks as remaining_count' => fn ($q) => $q->available($today)]);
 
         return new ProjectResource($project);
     }

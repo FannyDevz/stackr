@@ -81,8 +81,13 @@ export const useUI = create<UIState>((set, get) => ({
   toggleTheme: () => get().setTheme(get().theme === 'dark' ? 'light' : 'dark'),
   selectedTaskId: null,
   setSelectedTask: (id) => set({ selectedTaskId: id }),
-  sidebarOpen: true,
-  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+  sidebarOpen: localStorage.getItem('sidebarOpen') !== '0',
+  toggleSidebar: () =>
+    set((s) => {
+      const next = !s.sidebarOpen
+      localStorage.setItem('sidebarOpen', next ? '1' : '0')
+      return { sidebarOpen: next }
+    }),
   taskFilter: storedFilter,
   setTaskFilter: (f) => {
     localStorage.setItem('taskFilter', JSON.stringify(f))
